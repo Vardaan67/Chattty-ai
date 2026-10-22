@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#fff8fc" />
+  <title>Chattty AI — Your AI Chat Buddy</title>
+  <style>
+    :root {
+      --ink: #29243b;
+      --muted: #827a92;
+      --pink: #ff7eb6;
+      --purple: #9b8cff;
+      --line: #eee8f4;
+      --surface: rgba(255,255,255,.84);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 12% 10%, #ffe1ef 0, transparent 34%),
+        radial-gradient(ellipse at 88% 15%, #e4e0ff 0, transparent 33%),
+        radial-gradient(ellipse at 70% 95%, #d9fff2 0, transparent 34%),
+        #fffafd;
+      display: flex;
+      justify-content: center;
+      padding: 22px;
+    }
+    .app {
+      width: min(100%, 1050px);
+      min-height: min(900px, calc(100vh - 44px));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 30px;
+      background: var(--surface);
+      box-shadow: 0 25px 90px rgba(102, 74, 135, .13);
+      backdrop-filter: blur(18px);
+    }
+    header {
+      min-height: 82px;
+      padding: 17px 25px;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.6);
+    }
+    .brand-icon {
+      width: 46px; height: 46px;
+      display: grid; place-items: center;
+      border-radius: 17px;
+      color: white; font-size: 24px;
+      background: linear-gradient(135deg, #ff80b8, #a18cff 70%, #7ddfd0);
+      box-shadow: 0 7px 18px rgba(179, 122, 214, .22);
+    }
+    .brand-name { font-weight: 850; font-size: 22px; letter-spacing: -.7px; }
+    .brand-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .online {
+      margin-left: auto; display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: #3d9d83; font-weight: 700;
+      padding: 8px 11px; background: #eafff7; border-radius: 999px;
+    }
+    .online span { width: 7px; height: 7px; border-radius: 50%; background: #42c99c; }
+    #chat {
+      flex: 1; overflow-y: auto; padding: 26px clamp(16px, 5vw, 58px);
+      display: flex; flex-direction: column; gap: 18px; scroll-behavior: smooth;
+    }
+    .welcome {
+      flex: 1; min-height: 360px;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      text-align: center; padding: 25px 12px 40px;
+    }
+    .welcome[hidden] { display: none; }
+    .rainbow-smile {
+      position: relative;
+      width: 190px; height: 170px;
+      display: flex; align-items: flex-end; justify-content: center;
+      margin-bottom: 19px;
+    }
+    .rainbow {
+      position: absolute; width: 182px; height: 91px;
+      top: 0; left: 4px; overflow: hidden;
+    }
+    .rainbow::before {
+      content: ""; position: absolute; left: 0; top: 0;
+      width: 182px; height: 182px; border-radius: 50%;
+      background: conic-gradient(from 270deg at 50% 50%,
+        #ff6f91 0deg 30deg, #ffb45e 30deg 60deg, #ffe36e 60deg 90deg,
+        #8de5b5 90deg 120deg, #79d8ff 120deg 150deg, #a89aff 150deg 180deg,
+        transparent 180deg 360deg);
+      transform: rotate(180deg);
+    }
+    .rainbow::after {
+      content: ""; position: absolute; left: 19px; top: 19px;
+      width: 144px; height: 144px; border-radius: 50%;
+      background: #fffafd;
+    }
+    .smiley {
+      z-index: 1; width: 100px; height: 100px; border-radius: 50%;
+      background: linear-gradient(145deg, #ffe98a, #ffc85f);
+      border: 5px solid white; box-shadow: 0 12px 26px rgba(222, 166, 68, .2);
+      position: relative;
+    }
+    .eye { position: absolute; width: 8px; height: 13px; background: #59435a; border-radius: 50%; top: 31px; }
+    .eye.left { left: 27px; } .eye.right { right: 27px; }
+    .smile {
+      position: absolute; width: 35px; height: 19px; left: 27px; top: 47px;
+      border-bottom: 4px solid #59435a; border-radius: 0 0 25px 25px;
+    }
+    .sparkle { position: absolute; color: #ff9cc8; font-size: 25px; }
+    .sparkle.one { left: 0; top: 53px; } .sparkle.two { right: -1px; top: 25px; color: #9b8cff; }
+    h1 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -1.7px; margin: 0; font-weight: 850; }
+    h1 .gradient { background: linear-gradient(90deg, #ff72ad, #9a83ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .welcome-title { margin: 0 0 20px; font-size: clamp(42px, 7vw, 64px); letter-spacing: -2.5px; font-weight: 900; }
+    .onboarding { width: min(100%, 440px); display: flex; flex-direction: column; gap: 15px; align-items: stretch; }
+    .onboarding label { text-align: left; color: var(--ink); font-size: 13px; font-weight: 750; }
+    .onboarding input { width: 100%; border: 1px solid #e8def3; border-radius: 14px; padding: 14px 15px; background: white; }
+    .avatar-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .avatar-choice { border: 2px solid #eee5f6; background: white; border-radius: 16px; padding: 12px 6px; cursor: pointer; font-size: 27px; transition: .15s; }
+    .avatar-choice.selected { border-color: #9b8cff; background: #f2efff; box-shadow: 0 0 0 3px #9b8cff22; }
+    .primary-button { border: 0; border-radius: 15px; padding: 14px 18px; background: linear-gradient(135deg, #ff80b5, #9d8aff); color: white; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px #a58edb33; }
+    .primary-button:disabled { opacity: .45; cursor: not-allowed; }
+    .onboarding-error { color: #bd426c; font-size: 12px; min-height: 16px; text-align: left; }
+    .welcome p { color: var(--muted); font-size: 15px; line-height: 1.65; max-width: 410px; margin: 12px 0 24px; }
+    .suggestions { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; max-width: 610px; }
+    .suggestion {
+      border: 1px solid #eee5f6; background: white; color: #625777;
+      border-radius: 999px; padding: 10px 14px; cursor: pointer;
+      font: inherit; font-size: 12px; font-weight: 650;
+      box-shadow: 0 3px 10px rgba(86, 56, 120, .035);
+      transition: transform .15s, border-color .15s, box-shadow .15s;
+    }
+    .suggestion:hover { transform: translateY(-2px); border-color: #d5c8ff; box-shadow: 0 6px 15px rgba(86,56,120,.08); }
+    .message { display: flex; align-items: flex-end; gap: 10px; max-width: 85%; animation: appear .2s ease-out; }
+    .message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .avatar { width: 33px; height: 33px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 12px; background: #f1eaff; font-size: 16px; }
+    .user .avatar { background: #ffe4f0; }
+    .bubble { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; font-size: 14px; padding: 13px 16px; border: 1px solid #eee8f4; border-radius: 18px 18px 18px 5px; background: white; box-shadow: 0 4px 15px rgba(66, 40, 90, .04); }
+    .user .bubble { color: #fff; background: linear-gradient(135deg, #ff85b8, #a08bff); border: 0; border-radius: 18px 18px 5px 18px; }
+    .typing { display: flex; gap: 5px; align-items: center; min-width: 60px; }
+    .typing i { width: 6px; height: 6px; background: #a99bbd; border-radius: 50%; animation: bounce .9s infinite ease-in-out; }
+    .typing i:nth-child(2) { animation-delay: .12s; } .typing i:nth-child(3) { animation-delay: .24s; }
+    .composer-wrap { padding: 14px clamp(12px, 3vw, 30px) 18px; }
+    form {
+      display: flex; align-items: center; gap: 10px; max-width: 850px; margin: 0 auto;
+      padding: 8px 8px 8px 18px; background: white; border: 1px solid #eae2f3;
+      border-radius: 20px; box-shadow: 0 9px 30px rgba(105, 74, 135, .09);
+    }
+    input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: 14px; color: var(--ink); background: transparent; padding: 11px 0; }
+    input::placeholder { color: #aaa0b8; }
+    .send {
+      width: 45px; height: 45px; flex: 0 0 auto; border: 0; cursor: pointer; color: white;
+      border-radius: 15px; font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, #ff80b5, #9d8aff);
+      box-shadow: 0 5px 13px rgba(165, 126, 223, .25); transition: transform .15s;
+    }
+    .send:hover { transform: translateY(-1px) scale(1.02); }
+    .send:disabled { opacity: .55; cursor: wait; }
+    .footnote { text-align: center; font-size: 10px; color: #a59bb1; margin-top: 10px; }
+    @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .55; } 30% { transform: translateY(-5px); opacity: 1; } }
+    @media (max-width: 600px) {
+      body { padding: 0; }
+      .app { min-height: 100vh; border-radius: 0; border: 0; }
+      header { padding: 14px 16px; }
+      .brand-name { font-size: 20px; }
+      .online { font-size: 0; padding: 10px; }
+      .online span { width: 8px; height: 8px; }
+      #chat { padding: 18px 14px; }
+      .message { max-width: 95%; }
+      .rainbow-smile { transform: scale(.88); margin-bottom: 5px; }
+      .welcome { min-height: 350px; }
+      .welcome p { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand-icon" aria-hidden="true">☺</div>
+      <div>
+        <div class="brand-name">Chatty</div>
+        <div class="brand-sub">A little sunshine in your chats</div>
+      </div>
+      <div class="online"><span></span> Ready to chat</div>
+    </header>
+
+    <section id="chat" aria-live="polite" aria-label="Chat conversation">
+      <div class="welcome" id="welcome">
+        <h1 class="welcome-title"><span class="gradient">Chattty AI</span></h1>
+        <div class="rainbow-smile" aria-hidden="true">
+          <div class="rainbow"></div>
+          <span class="sparkle one">✦</span>
+          <span class="sparkle two">✧</span>
+          <div class="smiley">
+            <span class="eye left"></span><span class="eye right"></span><span class="smile"></span>
+          </div>
+        </div>
+        <div id="onboarding" class="onboarding">
+          <label for="userName">First, what's your name?</label>
+          <input id="userName" type="text" maxlength="40" placeholder="Type your name..." autocomplete="given-name" />
+          <label>Now choose your avatar</label>
+          <div class="avatar-options" id="avatarOptions" role="group" aria-label="Choose an avatar">
+            <button type="button" class="avatar-choice selected" data-avatar="🙂" aria-label="Smiley avatar">🙂</button>
+            <button type="button" class="avatar-choice" data-avatar="😎" aria-label="Cool avatar">😎</button>
+            <button type="button" class="avatar-choice" data-avatar="🐱" aria-label="Cat avatar">🐱</button>
+            <button type="button" class="avatar-choice" data-avatar="🦊" aria-label="Fox avatar">🦊</button>
+            <button type="button" class="avatar-choice" data-avatar="🐼" aria-label="Panda avatar">🐼</button>
+            <button type="button" class="avatar-choice" data-avatar="🐸" aria-label="Frog avatar">🐸</button>
+            <button type="button" class="avatar-choice" data-avatar="🐶" aria-label="Dog avatar">🐶</button>
+            <button type="button" class="avatar-choice" data-avatar="🚀" aria-label="Rocket avatar">🚀</button>
+          </div>
+          <div class="onboarding-error" id="onboardingError" aria-live="polite"></div>
+          <button class="primary-button" id="startChat" type="button">Let's chat! ✨</button>
+        </div>
+        <div id="welcomeChat" hidden>
+          <h1>Hi <span id="welcomeName" class="gradient"></span>! 👋</h1>
+          <p>Questions, ideas, homework, stories, coding — ask Chattty AI anything and let's figure it out together.</p>
+          <div class="suggestions">
+          <button class="suggestion" data-prompt="Explain black holes in a simple way">🌌 Explain something</button>
+          <button class="suggestion" data-prompt="Give me a clever riddle">🧩 Give me a riddle</button>
+          <button class="suggestion" data-prompt="Help me come up with a cool project">💡 Brainstorm ideas</button>
+          <button class="suggestion" data-prompt="Tell me a surprising science fact">🌈 Surprise me</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="composer-wrap">
+      <form id="form">
+        <input id="prompt" type="text" maxlength="4000" placeholder="Message Chatty..." autocomplete="off" aria-label="Message Chatty" />
+        <button class="send" id="send" type="submit" aria-label="Send message">↑</button>
+      </form>
+      <div class="footnote">Chatty can make mistakes, so double-check important information.</div>
+    </div>
+  </main>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const welcome = document.getElementById("welcome");
+    const form = document.getElementById("form");
+    const input = document.getElementById("prompt");
+    const sendButton = document.getElementById("send");
+    const userNameInput = document.getElementById("userName");
+    const startChatButton = document.getElementById("startChat");
+    const onboarding = document.getElementById("onboarding");
+    const welcomeChat = document.getElementById("welcomeChat");
+    const onboardingError = document.getElementById("onboardingError");
+    let selectedAvatar = "🙂";
+    let displayName = "";
+    let history = [];
+
+    document.querySelectorAll(".avatar-choice").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedAvatar = button.dataset.avatar;
+        document.querySelectorAll(".avatar-choice").forEach((choice) => {
+          const selected = choice === button;
+          choice.classList.toggle("selected", selected);
+          choice.setAttribute("aria-pressed", String(selected));
+        });
+      });
+    });
+
+    startChatButton.addEventListener("click", () => {
+      displayName = userNameInput.value.trim();
+      if (!displayName) {
+        onboardingError.textContent = "Please type your name first.";
+        userNameInput.focus();
+        return;
+      }
+      onboardingError.textContent = "";
+      onboarding.hidden = true;
+      welcomeChat.hidden = false;
+      document.getElementById("welcomeName").textContent = displayName;
+      document.querySelector(".brand-name").textContent = "Chattty AI";
+      document.querySelector(".brand-sub").textContent = `Here to help, ${displayName}`;
+      input.placeholder = `Message Chattty AI, ${displayName}...`;
+      input.focus();
+    });
+
+    userNameInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") startChatButton.click();
+    });
+
+    function addMessage(text, role) {
+      welcome.hidden = true;
+      const row = document.createElement("div");
+      row.className = `message ${role === "user" ? "user" : "bot"}`;
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = role === "user" ? selectedAvatar : "☺";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+      row.append(avatar, bubble);
+      chat.appendChild(row);
+      chat.scrollTop = chat.scrollHeight;
+      return row;
+    }
+
+    function showTyping() {
+      const row = addMessage("", "assistant");
+      const bubble = row.querySelector(".bubble");
+      bubble.classList.add("typing");
+      bubble.setAttribute("aria-label", "Chatty is thinking");
+      bubble.innerHTML = "<i></i><i></i><i></i>";
+      return row;
+    }
+
+    async function sendMessage(text) {
+      const message = text.trim();
+      if (!message || sendButton.disabled) return;
+      addMessage(message, "user");
+      input.value = "";
+      input.focus();
+      history.push({ role: "user", content: message });
+      sendButton.disabled = true;
+      const typing = showTyping();
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Something went wrong.");
+        const reply = data.reply || "I couldn't come up with a reply just now.";
+        typing.remove();
+        addMessage(reply, "assistant");
+        history.push({ role: "assistant", content: reply });
+      } catch (error) {
+        typing.remove();
+        const note = error.message === "Failed to fetch"
+          ? "I can't reach the AI server yet. Start the local server by following the README, and make sure your API key is configured."
+          : error.message;
+        addMessage("Oops! " + note, "assistant");
+        // Don't keep a failed turn in the context.
+        history.pop();
+      } finally {
+        sendButton.disabled = false;
+        chat.scrollTop = chat.scrollHeight;
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      sendMessage(input.value);
+    });
+    document.querySelectorAll("[data-prompt]").forEach((button) => {
+      button.addEventListener("click", () => sendMessage(button.dataset.prompt));
+    });
+  </script>
+</body>
+</html>
